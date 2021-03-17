@@ -37,17 +37,18 @@ class Solid:
 
     def __init__(self, cubes):
         ordered_avatars = frozenset(Solid.gen_avatars(cubes))
-        self.avatars = frozenset(map(frozenset, ordered_avatars))
-        self.number_of_permutations = len(ordered_avatars) // len(self.avatars)
+        avatars = frozenset(map(frozenset, ordered_avatars))
+        self.cubes = tuple(min(map(sorted, avatars)))
+        self.number_of_permutations = len(ordered_avatars) // len(avatars)
 
     def __eq__(self, other):
-        return other and self.avatars == other.avatars
+        return other and self.cubes == other.cubes
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(self.avatars)
+        return hash(self.cubes)
 
     @staticmethod
     def gen_avatars(cubes):
@@ -62,13 +63,12 @@ class Solid:
         return tuple((x - min_x, y - min_y, z - min_z) for x, y, z in cubes)
 
     def add_cube(self):
-        avatar = next(iter(self.avatars))
-        for cube in avatar:
+        for cube in self.cubes:
             x, y, z = cube
             for dx, dy, dz in ((-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)):
                 new_cube = (x+dx, y+dy, z+dz)
-                if new_cube not in avatar:
-                    yield Solid(avatar | {new_cube})
+                if new_cube not in self.cubes:
+                    yield Solid(self.cubes + (new_cube,))
 
 
 def main(max_nb_cubes):
