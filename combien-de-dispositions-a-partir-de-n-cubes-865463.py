@@ -6,34 +6,6 @@ from time import perf_counter
 
 
 class Solid:
-    rotations = frozenset((
-        lambda x, y, z: (x, y, z),
-        lambda x, y, z: (x, -y, -z),
-        lambda x, y, z: (-x, y, -z),
-        lambda x, y, z: (-x, -y, z),
-        lambda x, y, z: (-x, -z, -y),
-        lambda x, y, z: (-x, z, y),
-        lambda x, y, z: (x, -z, y),
-        lambda x, y, z: (x, z, -y),
-
-        lambda x, y, z: (y, z, x),
-        lambda x, y, z: (y, -z, -x),
-        lambda x, y, z: (-y, z, -x),
-        lambda x, y, z: (-y, -z, x),
-        lambda x, y, z: (-y, -x, -z),
-        lambda x, y, z: (-y, x, z),
-        lambda x, y, z: (y, -x, z),
-        lambda x, y, z: (y, x, -z),
-
-        lambda x, y, z: (z, x, y),
-        lambda x, y, z: (z, -x, -y),
-        lambda x, y, z: (-z, x, -y),
-        lambda x, y, z: (-z, -x, y),
-        lambda x, y, z: (-z, -y, -x),
-        lambda x, y, z: (-z, y, x),
-        lambda x, y, z: (z, -y, x),
-        lambda x, y, z: (z, y, -x),
-    ))
 
     def __init__(self, cubes):
         ordered_avatars = frozenset(Solid.gen_avatars(cubes))
@@ -52,30 +24,77 @@ class Solid:
 
     @staticmethod
     def gen_avatars(cubes):
-        for rotation in Solid.rotations:
-            yield Solid.move_to_origin(tuple(rotation(*cube) for cube in cubes))
+        for rotation in zip(*map(gen_rotations, cubes)):
+            yield Solid.move_to_origin(rotation)
 
     @staticmethod
     def move_to_origin(cubes):
-        min_x = min(x for x, y, z in cubes)
-        min_y = min(y for x, y, z in cubes)
-        min_z = min(z for x, y, z in cubes)
-        return tuple((x - min_x, y - min_y, z - min_z) for x, y, z in cubes)
+        min_xs = tuple(min(cube[d] for cube in cubes) for d in range(len(cubes[0])))
+        return tuple(tuple(c - min_xs[d] for d, c in enumerate(cube)) for cube in cubes)
 
     def add_cube(self):
         for cube in self.cubes:
-            x, y, z = cube
-            for dx, dy, dz in ((-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)):
-                new_cube = (x+dx, y+dy, z+dz)
+            for new_cube in gen_translations(cube):
                 if new_cube not in self.cubes:
                     yield Solid(self.cubes + (new_cube,))
 
 
-def main(max_nb_cubes):
+def gen_permutations(sequence):
+    """Apply Steinhaus–Johnson–Trotter algorithm to generate all permutations of the sequence"""
+    sequence = list(sequence)
+    n = len(sequence)
+    values = list(range(1, n+1))
+    directions = [-1] * n
+
+    while True:
+        yield tuple(sequence)
+
+        position, value = None, 0
+        for i, v in enumerate(values):
+            if v > value and 0 <= i + directions[i] < n and values[i + directions[i]] < v:
+                position, value = i, v
+        if value == 0:
+            return
+
+        i, j = position, position + directions[position]
+        values[i], values[j] = values[j], values[i]
+        sequence[i], sequence[j] = sequence[j], sequence[i]
+        directions[i], directions[j] = directions[j], directions[i]
+
+        for i, v in enumerate(values):
+            if v > value:
+                directions[i] *= -1
+
+
+def gen_gray_codes(length):
+    codes = [(0,) * length]
+    yield tuple(codes[0])
+    for n in range(length):
+        for code in reversed(codes):
+            new_code = code[:n] + (1,) + code[n+1:]
+            yield new_code
+            codes.append(new_code)
+
+
+def gen_rotations(sequence):
+    n = len(sequence)
+    codes = list(tuple(1-c*2 for c in code) for code in gen_gray_codes(n))
+    for i, permutation in enumerate(gen_permutations(sequence)):
+        for code in codes[i % 2::2]:
+            yield tuple(x*c for x, c in zip(permutation, code))
+
+
+def gen_translations(cube):
+    for d in range(len(cube)):
+        yield cube[:d] + (cube[d] - 1,) + cube[d+1:]
+        yield cube[:d] + (cube[d] + 1,) + cube[d + 1:]
+
+
+def main(max_nb_cubes, dimensions):
     start = perf_counter()
-    origin_cube = Solid([(0, 0, 0)])
-    solids = [set(), {origin_cube}]
-    print(f"{0}: {0} ({0}) {perf_counter()-start:3.3f}s")
+    origin_cube = Solid([(0,)*dimensions])
+    solids = [None, {origin_cube}]
+    print(f"{0}: {1} ({1}) {perf_counter()-start:3.3f}s")
     print(f"{1}: {1} ({1}) {perf_counter()-start:3.3f}s")
 
     for nb_cubes in range(2, max_nb_cubes + 1):
@@ -87,4 +106,8 @@ def main(max_nb_cubes):
 
 
 if __name__ == "__main__":
-    main(10)
+    main(10, 1)
+    main(10, 2)
+    main(8, 3)
+    main(6, 4)
+    main(5, 5)
