@@ -12,7 +12,7 @@ def solve(n):
     lines = [frozenset()] + [None] * (2*n-1)  # Lines[i] is the forbidden lines before pawn i is placed.
 
     i = 0
-    while i < 2*n:
+    while i >= 0:
         if pawns[i] >= n:
             i -= 1
             pawns[i] += 1
@@ -25,8 +25,10 @@ def solve(n):
                 if i < 2*n:
                     pawns[i] = 0 if not i & 1 else pawns[i-1] + 1
                     lines[i] = lines[i-1] | new_lines
-
-    return pawns
+                else:
+                    yield tuple(pawns)
+                    i -= 1
+                    pawns[i] += 1
 
 
 def get_line(a, b, c, d):
@@ -39,22 +41,23 @@ def get_line(a, b, c, d):
     return dx//g, dy//g, k//g
 
 
-def show_grid(n, pawns):
+def show_grid(pawns):
+    n = len(pawns) // 2
     grid = [['.'] * n for _ in range(n)]
     for col, row in enumerate(pawns):
         grid[row][col >> 1] = '0'
 
-    print(n)
     print('\n'.join(' '.join(row) for row in grid))
+    print()
 
 
 def main():
     for n in range(2, 21):
         start = perf_counter()
-        solution = solve(n)
-        print(f"Time: {perf_counter()-start:.3f}")
-        if solution:
-            show_grid(n, solution)
+        solutions = tuple(solve(n))
+        print(f"Found {len(solutions)} solutions for n={n} in {perf_counter()-start:.3f}s")
+        for solution in solutions:
+            show_grid(solution)
 
 
 if __name__ == "__main__":
