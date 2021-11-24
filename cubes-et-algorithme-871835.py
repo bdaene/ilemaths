@@ -4,38 +4,41 @@
 from heapq import heappop, heappush
 import sys
 from functools import cache
-from bisect import bisect
+from bisect import bisect, bisect_left, bisect_right
 from collections import defaultdict
 
 
 def solve(n, k):
 
-    powers = [0]
-    while powers[-1] < n:
-        powers.append(len(powers)**k)
-    powers_ = set(powers)
+    powers = []
+    i = 0
+    while (p := i**k) <= n:
+        powers.append(p)
+        i += 1
 
-    @cache
-    def get_cost(remainder):
-        return 0 if remainder == 0 else 1 if remainder in powers_ else 2
-
-    # Nodes are (cost, remainder, terms)
-    heap = [(get_cost(n), n, ())]
+    # Nodes are (cost, remainder, -terms)
+    heap: list[tuple[int, int, tuple[int, ...]]]
+    heap = [(1, n, ())]
+    best = 9
     while heap:
-        _, n, terms = heappop(heap)
-        if n == 0:
-            # If there is no remainder, we found the solution.
-            yield terms
+        # print(heap)
+        cost, n, terms = heappop(heap)
+        if cost > best:
             return
 
-        m = bisect(powers, n) - 1   # Maximum term
-        if terms:
-            # Do not look twice for the same solution.
-            m = min(m, terms[-1])
+        if n == 0:
+            best = cost
+            # If there is no remainder, we found a solution.
+            yield tuple(-term for term in terms)
+            continue
 
-        for i in range(1, m+1):
-            r = n-i**k
-            heappush(heap, (len(terms)+1+get_cost(r), r, terms + (i,)))
+        min_term = bisect_left(powers, (n/(best - len(terms))))
+        max_term = bisect_right(powers, n)
+        if terms:
+            max_term = min(max_term, 1-terms[-1])
+        for term, power in enumerate(powers[min_term:max_term], min_term):
+            cost = len(terms) + (n+power-1)//power
+            heappush(heap, (cost, n - power, terms + (-term,)))
 
 
 def solve2(n, k):
@@ -79,7 +82,7 @@ def solve3(n, k):
 def main():
     n = int(input("Entrez un nombre: "))
     k = 3
-    for terms in solve3(n, k):
+    for terms in solve(n, k):
         print(' + '.join(f'{term}^{k}' for term in terms) + f' = {sum(term**k for term in terms)}')
 
 
