@@ -1,11 +1,9 @@
 
 # https://www.ilemaths.net/sujet-cubes-et-algorithme-871835.html
 
-from heapq import heappop, heappush
-import sys
-from functools import cache
-from bisect import bisect, bisect_left, bisect_right
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
+from heapq import heappop, heappush
 
 
 def solve(n, k):

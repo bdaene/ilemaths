@@ -2,7 +2,6 @@
 # See subject at https://www.ilemaths.net/sujet-un-premier-divise-en-2-865759.html
 
 from primes import is_probable_prime, gen_primes_under
-from itertools import product
 
 
 def solve(nb_digits):

@@ -10,7 +10,7 @@ class Solid:
 
     even_permutations = [[()]]
     odd_permutations = [[]]
-    gray_codes = [[()]]
+    gray_codes: list[list[tuple[int, ...]]] = [[()]]
 
     def __init__(self, cubes):
         ordered_avatars = frozenset(Solid.gen_avatars(cubes))
