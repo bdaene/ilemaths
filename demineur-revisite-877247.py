@@ -4,6 +4,7 @@ from itertools import product
 
 
 def solve(m):
+    solutions = {}
     for start in product((True, False), repeat=m):
         grid = [start]
 
@@ -27,6 +28,10 @@ def solve(m):
 
         show_grid(grid)
         print(current_length, valid_lengths)
+        solutions.setdefault(current_length, set())
+        solutions[current_length] |= set(valid_lengths)
+
+    return solutions
 
 
 def show_grid(grid):
@@ -35,9 +40,8 @@ def show_grid(grid):
 
 
 def main():
-    # solve(3)
-    # solve(4)
-    solve(5)
+    solutions = solve(3)
+    print(solutions)
 
 
 if __name__ == "__main__":
