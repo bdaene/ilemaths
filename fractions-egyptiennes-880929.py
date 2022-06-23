@@ -4,9 +4,16 @@ from fractions import Fraction
 from math import ceil
 
 
+seen = set()
+
+
 def solve(ds, splits):
     ds_ = sorted(ds)
-    yield ds_
+    if tuple(ds_) in seen:
+        return
+    else:
+        seen.add(tuple(ds_))
+        yield ds_
     for d in reversed(ds_):
         ds.remove(d)
         for split in splits.get(d, set()):
@@ -36,11 +43,16 @@ def main():
               for d in range(1, max_denominator // 2 + 1)}
     print(sum(map(len, splits.values())))
 
-    best = 0
+    solutions = []
     for solution in solve({1}, splits):
-        if len(solution) > best:
-            best = len(solution)
-            print(f"{best:2} {solution}")
+        length = len(solution)
+        solutions = solutions[:length]
+        solutions += [None] * (length - len(solutions))
+        solutions.append(solution)
+        if length >= 42:
+            print(42, solution)
+            # for n, s in enumerate(solutions[1:], 1):
+            #     print(f"{n:2} {s}")
 
 
 if __name__ == "__main__":
