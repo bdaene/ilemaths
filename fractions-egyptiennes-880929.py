@@ -1,27 +1,18 @@
 # See https://www.ilemaths.net/sujet-fractions-egyptiennes-880929.html
 
 from fractions import Fraction
-from heapq import heappop, heappush
 from math import ceil
-
-from primes import gen_primes_under
-
-MAX_DENOMINATOR = 24 + 1
-PRIMES = set(gen_primes_under(MAX_DENOMINATOR))
-LENGTH = 10 + 1
 
 
 def solve(ds, splits):
-    heap = [(-len(ds), max(ds), ds)]
-
-    while heap:
-        _, _, ds = heappop(heap)
-        yield sorted(ds)
-        for d in ds:
-            for split in splits.get(d, set()):
-                if ds.isdisjoint(split):
-                    ds_ = ds - {d} | split
-                    heappush(heap, (-len(ds_), max(ds_), ds_))
+    ds_ = sorted(ds)
+    yield ds_
+    for d in reversed(ds_):
+        ds.remove(d)
+        for split in splits.get(d, set()):
+            if ds.isdisjoint(split):
+                yield from solve(ds | split, splits)
+        ds.add(d)
 
 
 def gen_splits(fraction, max_splits, min_d, max_d):
@@ -40,8 +31,10 @@ def gen_splits(fraction, max_splits, min_d, max_d):
 def main():
     max_denominator = 99
     max_splits = 3
-    splits = {d: set(split for split in gen_splits(Fraction(1, d), max_splits, d + 1, max_denominator))
-              for d in range(1, max_denominator // 2)}
+    splits = {d: sorted((split for split in gen_splits(Fraction(1, d), max_splits, d + 1, max_denominator)),
+                        key=lambda s: sorted(s, reverse=True))
+              for d in range(1, max_denominator // 2 + 1)}
+    print(sum(map(len, splits.values())))
 
     best = 0
     for solution in solve({1}, splits):
