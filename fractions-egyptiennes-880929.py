@@ -3,7 +3,6 @@
 from fractions import Fraction
 from math import ceil
 
-
 seen = set()
 
 
@@ -41,16 +40,21 @@ def main():
     splits = {d: sorted((split for split in gen_splits(Fraction(1, d), max_splits, d + 1, max_denominator)),
                         key=lambda s: sorted(s, reverse=True))
               for d in range(1, max_denominator // 2 + 1)}
+    for n, splits_ in splits.items():
+        if splits_:
+            print(f"{n}: " + ", ".join(sorted((f"{sorted(split)}" for split in splits_), key=lambda s: (len(s), s))))
     print(sum(map(len, splits.values())))
 
     solutions = []
-    for solution in solve({1}, splits):
+    best = 0
+    for solution in solve({2, 3, 6}, splits):
         length = len(solution)
         solutions = solutions[:length]
         solutions += [None] * (length - len(solutions))
         solutions.append(solution)
-        if length >= 42:
-            print(42, solution)
+        if length >= best:
+            best = length
+            print(f"{best:2} {solution}")
             # for n, s in enumerate(solutions[1:], 1):
             #     print(f"{n:2} {s}")
 
