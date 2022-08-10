@@ -18,7 +18,6 @@ def solve(a):
 
 def main():
     for a in range(1, 1000):
-        print(a)
         for b, c in solve(a):
             print(f"{2*c}^{2*a} - {2*b}^{2*a} = 12({2*a})^{2*a}")
 
