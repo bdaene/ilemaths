@@ -13,14 +13,14 @@ def get_current(configuration):
 
 
 def show(configuration):
-    lines = ['', '', '']
+    lines = ['|', '|', '|']
     for _ in range(3):
         stage = configuration & 0b111
         configuration >>= 3
         for i in range(3):
             lines[i] += '/' if stage & 1 else '\\'
             stage >>= 1
-    print('\n'.join(lines))
+    print('|\n'.join(lines)+'|')
 
 
 def main():
