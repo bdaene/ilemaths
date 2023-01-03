@@ -33,7 +33,8 @@ def show_w(n_limit=60, w1_min=0.1716, w1_max=0.1720, w1_slices=1001):
 
     w1, n = numpy.meshgrid(w1, numpy.arange(1, n_limit + 1))
     axes = pyplot.axes(projection='3d')
-    axes.plot_surface(w1[::2, :], n[1::2, :], w[1::2, :])
+    # axes.plot_surface(w1[::2, :], n[::2, :], w[::2, :])
+    axes.plot_surface(w1[1::2, :], n[1::2, :], w[1::2, :])
     axes.set_xlabel('w1')
     axes.set_ylabel('n')
     axes.set_zlabel('wn')
@@ -64,7 +65,7 @@ def main():
 
     w1_min, w1_max = get_w1_threshold(n=100)
     print(f"{w1_min} < w1 < {w1_max} ({numpy.exp(w1_min)} < u1 < {numpy.exp(w1_max)})")
-    show_w(w1_min=w1_min - 0.0001, w1_max=w1_max + 0.0001)
+    show_w(w1_min=w1_min - 0.1, w1_max=w1_max + 0.1)
 
 
 if __name__ == "__main__":
