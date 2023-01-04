@@ -131,7 +131,7 @@ def plot_quivers(v, axes, x_name, y_name, z_name):
 
 
 def plot_quivers_2(v2_min, v2_max, axes, n_min=2, n_max=50, v_slices=11):
-    n = numpy.arange(n_min, n_max + 1, 2)
+    n = numpy.arange(n_min, n_max + 1, 1)
     v = numpy.linspace(numpy.log1p(0), numpy.log1p(1), v_slices)
 
     n, v = numpy.meshgrid(n, v)
@@ -140,13 +140,13 @@ def plot_quivers_2(v2_min, v2_max, axes, n_min=2, n_max=50, v_slices=11):
     vn2 = numpy.log1p(numpy.exp(-vn1 * n))
     dv = vn2 - v
 
-    axes.quiver(n, v, dn, dv, scale=1, angles='xy', scale_units='xy', cmap=cm.coolwarm)
-    axes.set_xlabel(f"n=2k")
-    axes.set_ylabel(f"v")
-    axes.set_title(f"v(n)")
+    axes.quiver(n, v, dn, dv, scale=2, angles='xy', scale_units='xy', cmap=cm.coolwarm)
+    axes.set_xlabel(f"n")
+    axes.set_ylabel(f"vn")
+    axes.set_title(f"∇vn+2(vn, n)")
 
     v2, n_values, v = get_v(n_max=n_max, v_min=v2_min, v_max=v2_max, v_slices=1)
-    axes.plot(n_values[::2], v[::2, 0], 'r')
+    axes.plot(n_values, v[:, 0], 'r')
 
 
 def plot_vn2(axes, n_min=2, n_max=10, v_min=numpy.log1p(0), v_max=numpy.log1p(1), v_slices=1001):
@@ -163,7 +163,7 @@ def plot_vn2(axes, n_min=2, n_max=10, v_min=numpy.log1p(0), v_max=numpy.log1p(1)
 
     axes.set_xlabel('vn')
     axes.set_ylabel('vn+2')
-    axes.set_title('vn+2(vn, n)')
+    axes.set_title(f"vn+2(vn, n) n={n_min}..{n_max}")
     axes.plot(v, v, color='k')
 
 
@@ -180,7 +180,7 @@ def main():
 
     axes = figure.add_subplot(figure_rows, figure_columns, 2, projection='3d')
     v2_min, v2_max = get_threshold(partial(get_vn, n=1000))
-    print(f"{v2_min} < v2 < {v2_max} ({1 / (numpy.expm1(v2_max))} < u1 < {1 / (numpy.expm1(v2_min))})")
+    print(f"{v2_min} < v2 < {v2_max} ({1 / numpy.expm1(v2_max)} < u1 < {1 / numpy.expm1(v2_min)})")
     v2_delta = 0.25
     v1, n, v = get_v(n_max=50, v_min=v2_min - v2_delta, v_max=v2_max + v2_delta, v_slices=1001)
     plot_surface(v1, n, v, axes, 'v2', 'n', 'v')
