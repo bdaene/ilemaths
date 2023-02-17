@@ -16,8 +16,8 @@ def project(point, angle):
 
 def draw_sun(axes, min_angle: float, max_angle: float, center: complex, radius: float):
     t_min, t_max = project(center, min_angle), project(center, max_angle)
-    axes.add_patch(Polygon([(0, 0), (t_min.real, t_min.imag), (t_max.real, t_max.imag)], facecolor='y'))
-    axes.add_patch(Circle((center.real, center.imag), radius, facecolor='r'))
+    axes.add_patch(Polygon([(0, 0), (t_min.real, t_min.imag), (t_max.real, t_max.imag)], color='y'))
+    axes.add_patch(Circle((center.real, center.imag), radius, color='r'))
 
 
 def find_next_sun(min_angle, max_angle, radius, left_sun):
