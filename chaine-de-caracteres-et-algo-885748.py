@@ -1,5 +1,6 @@
 # See https://www.ilemaths.net/sujet-chaine-de-caracteres-et-algo-885748.html
 import cProfile
+from functools import reduce
 from itertools import chain, groupby
 from random import choices, shuffle
 from string import ascii_uppercase, digits
@@ -42,8 +43,15 @@ def flight(s):
 
 
 def replace_letters_2(message):
-    return ''.join(map(str, chain.from_iterable(
-        g if k else (i for i, c in enumerate(g, 1)) for k, g in groupby(message, digits.__contains__))))
+    return ''.join(
+        map(
+            str,
+            chain.from_iterable(
+                g if k else (i for i, c in enumerate(g, 1))
+                for k, g in groupby(message, digits.__contains__)
+            )
+        )
+    )
 
 
 def replace_letters_3(message):
@@ -70,48 +78,102 @@ def replace_letters_3(message):
     return ''.join(chain.from_iterable(modified_message))
 
 
+def nb_digits(n):
+    assert (n > 0)
+    if n < 10:
+        return 1
+
+    b, r = 10, 1
+    while b < n:
+        b *= 10
+        r += 1
+    return r + (0, 1)[n % b == 0]
+
+
+def letters2digits(n):
+    assert (n >= 0)
+    if n == 0:
+        return 1, 0
+
+    def iter_base(base, acc):
+        next_base = base * 10
+        p = min(next_base, n + 1)
+        for i in range(base, p):
+            acc = next_base * acc + i
+        return next_base, acc
+
+    base, acc = reduce(lambda x, _: iter_base(*x), range(nb_digits(n)), (1, 0))
+
+    return 10 ** nb_digits(acc), acc
+
+
+def flight_with_acc(s):
+    n, i = len(s), 0
+    r = 0
+
+    while i < n:
+        j = i
+        while j < n and s[j].isdigit():
+            r = r * 10 + ord(s[j]) - 48
+            j += 1
+
+        i = j
+        while j < n and not s[j].isdigit():
+            j += 1
+
+        pow10, acc = letters2digits(j - i)
+        r = r * pow10 + acc
+
+        i = max(j, i + 1)
+
+    return str(r).zfill(n)
+
+
 def generate_message(nb_letters, nb_digits):
     message = choices(ascii_uppercase, k=nb_letters) + choices(digits, k=nb_digits)
     shuffle(message)
     return ''.join(message)
 
 
-def test(length, func):
-    message = generate_message(length // 2, length - length // 2)
-    nb_tests = 10000000 // length
+ALGORITHMS = [replace_letters, flight, replace_letters_2, replace_letters_3, flight_with_acc]
 
-    for _ in range(nb_tests):
-        func(message)
+
+def validate(message='6930A85CDU744ZABR09', expected_result='6930185123744123409'):
+    for algorithm in ALGORITHMS:
+        assert algorithm(message) == expected_result
+
+
+def compare_times():
+    print('length', *(algorithm.__name__ for algorithm in ALGORITHMS))
+
+    for n in range(6):
+        length = 10 ** n
+        messages = [generate_message(length // 2, length - length // 2) for _ in range(10)]
+
+        nb_tests = 100000 // length
+
+        times = [
+            timeit(stmt=f'list({algorithm.__name__}(message) for message in {messages})',
+                   setup=f'from __main__ import {algorithm.__name__}', number=nb_tests)
+            for algorithm in ALGORITHMS
+        ]
+
+        print(f"{length:>7}", *(f"{t * 100 / nb_tests:>7.3f}" for t in times))
+
+    print()
+
+
+def profile():
+    messages = [generate_message(50000, 50000) for _ in range(100)]
+    for algorithm in ALGORITHMS:
+        print(algorithm.__name__)
+        cProfile.run(statement=f'list({algorithm.__name__}(message) for message in {messages})', sort='cumulative')
 
 
 def main():
-    assert replace_letters('6930A85CDU744ZABR09') == '6930185123744123409'
-    assert flight('6930A85CDU744ZABR09') == '6930185123744123409'
-    assert replace_letters_2('6930A85CDU744ZABR09') == '6930185123744123409'
-    assert replace_letters_3('6930A85CDU744ZABR09') == '6930185123744123409'
-
-    for n in range(7):
-        length = 10 ** n
-        message = generate_message(length // 2, length - length // 2)
-
-        nb_tests = 1000000 // length
-        t1 = timeit(stmt=f'replace_letters("{message}")', setup='from __main__ import replace_letters', number=nb_tests)
-        t2 = timeit(stmt=f'flight("{message}")', setup='from __main__ import flight', number=nb_tests)
-        t3 = timeit(stmt=f'replace_letters_2("{message}")', setup='from __main__ import replace_letters_2',
-                    number=nb_tests)
-        t4 = timeit(stmt=f'replace_letters_2("{message}")', setup='from __main__ import replace_letters_2',
-                    number=nb_tests)
-
-        print(f"{length:>7}",
-              f"{t1 * 1000 / nb_tests:>7.3f}",
-              f"{t2 * 1000 / nb_tests:>7.3f}",
-              f"{t3 * 1000 / nb_tests:>7.3f}",
-              f"{t4 * 1000 / nb_tests:>7.3f}")
-
-    cProfile.run(statement='test(100000, replace_letters)')
-    cProfile.run(statement='test(100000, flight)')
-    cProfile.run(statement='test(100000, replace_letters_2)')
-    cProfile.run(statement='test(100000, replace_letters_3)')
+    validate()
+    compare_times()
+    profile()
 
 
 if __name__ == "__main__":
