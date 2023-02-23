@@ -10,7 +10,7 @@ from timeit import timeit
 def replace_letters(message):
     modified_message, last_digit_index = "", -1
     for i, c in enumerate(message):
-        if c.isdigit():
+        if c in digits:
             modified_message += c
             last_digit_index = i
         else:
@@ -129,13 +129,43 @@ def flight_with_acc(s):
     return str(r).zfill(n)
 
 
+def replace_letters_4(message):
+    message += 'A' if message[-1] in digits else '0'
+    modified_message = []
+    start, in_digit_substring = 0, message[0] in digits
+    for i, c in enumerate(message):
+        if in_digit_substring == (in_digit_substring := c in digits):
+            continue
+        if in_digit_substring:
+            modified_message.append(i - start)
+        else:
+            modified_message.append(message[start:i])
+        start = i
+
+    letters_substrings = ['']
+    offset = message[0] in digits
+    for count in range(1, max(modified_message[offset::2], default=0) + 1):
+        letters_substrings.append(letters_substrings[-1] + str(count))
+
+    modified_message[offset::2] = map(letters_substrings.__getitem__, modified_message[offset::2])
+
+    return ''.join(modified_message)
+
+
 def generate_message(nb_letters, nb_digits):
     message = choices(ascii_uppercase, k=nb_letters) + choices(digits, k=nb_digits)
     shuffle(message)
     return ''.join(message)
 
 
-ALGORITHMS = [replace_letters, flight, replace_letters_2, replace_letters_3, flight_with_acc]
+ALGORITHMS = [
+    replace_letters,
+    flight,
+    replace_letters_2,
+    replace_letters_3,
+    # flight_with_acc,
+    replace_letters_4,
+]
 
 
 def validate(message='6930A85CDU744ZABR09', expected_result='6930185123744123409'):
