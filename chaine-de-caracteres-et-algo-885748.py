@@ -152,6 +152,35 @@ def replace_letters_4(message):
     return ''.join(modified_message)
 
 
+def group_digits(message):
+    start, in_digits = 0, True
+    for current, character in enumerate(message):
+        if (character in digits) != in_digits:
+            if in_digits:
+                yield message[start:current]
+            else:
+                yield current - start
+            start = current
+            in_digits = not in_digits
+
+    if in_digits:
+        yield message[start:]
+    else:
+        yield len(message) - start
+
+
+def replace_letters_5(message):
+    modified_message = list(group_digits(message))
+
+    letters_to_digits = ['']
+    for count in range(1, 1 + max(modified_message[1::2], default=0)):
+        letters_to_digits.append(letters_to_digits[-1] + str(count))
+
+    modified_message[1::2] = map(letters_to_digits.__getitem__, modified_message[1::2])
+
+    return ''.join(modified_message)
+
+
 def generate_message(nb_letters, nb_digits):
     message = choices(ascii_uppercase, k=nb_letters) + choices(digits, k=nb_digits)
     shuffle(message)
@@ -165,6 +194,7 @@ ALGORITHMS = [
     replace_letters_3,
     # flight_with_acc,
     replace_letters_4,
+    replace_letters_5,
 ]
 
 
