@@ -30,7 +30,7 @@ def gen_powerful():
 def solve_1():
     powerful = {}
     generator = gen_powerful()
-    for delta in itertools.count():
+    for delta in itertools.count(1):
         v = None
         for v in powerful:
             if v - delta in powerful:
@@ -60,7 +60,7 @@ def str_factors(factors):
     return '\xb7'.join(f"{f}^{e}" for f, e in sorted(factors.items()))
 
 
-def factorize(*numbers, timeout=5):
+def factorize(*numbers, timeout=20):
     with Pool() as pool:
         return pool.map_async(factorize_rho, numbers).get(timeout)
 
@@ -99,7 +99,6 @@ def get_powerful_diff(n):
         p1, p2 = a_i ** 2, c_i ** 2 * b
         if p1 < p2:
             p1, p2 = p2, p1
-    print(n, p1, p2)
 
     # Try to factorize the numbers:
     try:
@@ -110,15 +109,15 @@ def get_powerful_diff(n):
             p1_f, p2_f = a_i_f + a_i_f, c_i_f + c_i_f + b_f
             if p1 < p2:
                 p1_f, p2_f = p2_f, p1_f
-        print(n, str_factors(p1_f), str_factors(p2_f))
+        print(f"{n} = {str_factors(p1_f)} - {str_factors(p2_f)}")
     except TimeoutError:
-        print(f"Could not factorize.")
+        print(f"{n} = {p1} - {p2}")
 
 
 def solve_2():
-    for n in itertools.count():
+    for n in itertools.count(1):
         get_powerful_diff(n)
 
 
 if __name__ == "__main__":
-    solve_2()
+    solve_1()
