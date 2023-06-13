@@ -33,7 +33,7 @@ def apply_guess(possibilities, guess, value):
 
 def solve(t, guesses):
     possibilities = permutations(range(t))
-    for guess, value in guesses:
+    for guess, value in guesses.items():
         possibilities = apply_guess(possibilities, guess, value)
 
     # Remove possibilities with common back value
@@ -70,19 +70,23 @@ def gen_guesses(t, p, permutation=None):
         yield guess, min(a_i & b_i)
 
 
-def main():
-    t, p = 9, 4
+def main(t, p, player=False):
+    guesses = {guess: value for guess, value in gen_guesses(t, p)}
 
-    guesses = tuple(gen_guesses(t, p))
-    for guess, value in guesses:
-        guess = ''.join(ascii_letters[g] for g in guess)
-        print(f"{guess} -> {value}")
+    if player:
+        while True:
+            guess = tuple(sorted(ascii_letters.index(c) for c in input("Guess: ")))
+            value = guesses.get(guess)
+            print("Invalid guess." if value is None else value)
+    else:
+        for guess, value in guesses.items():
+            guess = ''.join(ascii_letters[g] for g in guess)
+            print(f"{guess} -> {value}")
+        possibilities = solve(t=t, guesses=guesses)
 
-    possibilities = solve(t=t, guesses=guesses)
-
-    for possibility in possibilities:
-        print(possibility)
+        for possibility in possibilities:
+            print(possibility)
 
 
 if __name__ == "__main__":
-    main()
+    main(t=9, p=4, player=False)
