@@ -67,14 +67,15 @@ class Engine:
         return tuple(permutation_1), tuple(permutation_2)
 
     def get_value(self, cards):
-        values = set(self.permutations[0][i] for i in cards)
-        for p in self.permutations[1:]:
-            values &= set(p[i] for i in cards)
-        if not values:
-            # p is too low, we have to choose a permutation
-            self.permutations = self.permutations[:1]
+        while True:
             values = set(self.permutations[0][i] for i in cards)
-        return choice(list(values))
+            for p in self.permutations[1:]:
+                values &= set(p[i] for i in cards)
+            if not values:
+                print("p is too low, we have to remove a permutation")
+                self.permutations = self.permutations[:-1]
+                continue
+            return choice(list(values))
 
     def verify(self, card, value):
         return next((p for p in self.permutations if p[card] != value), self.permutations[0])
@@ -185,6 +186,88 @@ class SimulatedPlayer(Player):
                    for cards, value in self.clues.items())
 
 
+class TheoreticalPlayer(Player):
+
+    def __init__(self, nb_cards, p):
+        self.nb_cards = nb_cards
+        self.p = p
+        self.clues = {}
+        self.gen_ask_cards = self.find_card()
+        self.valid_permutations = None
+
+    def ask_cards(self) -> tuple[int, ...]:
+        return next(self.gen_ask_cards, None)
+
+    def add_clue(self, cards, value):
+        print(f"{cards_to_string(cards)} -> {value}")
+        self.clues[cards] = value
+
+    def guess_a_card(self) -> tuple[int, int]:
+        if answer := self.get_known_card():
+            card, value = answer
+            print(f"Guessing {cards_to_string((card,))} -> {value}.")
+            return card, value
+
+        print("Could not find a card. Possibilities of values are:")
+        for permutation in self.valid_permutations:
+            print(permutation)
+
+        permutation = choice(list(self.valid_permutations))
+        card = choice(range(len(permutation)))
+        value = permutation[card]
+        print(f"Guessing at random {cards_to_string((card,))} -> {value}.")
+
+        return card, value
+
+    def get_known_card(self) -> Optional[tuple[int, int]]:
+        print(self.valid_permutations)
+        if not self.valid_permutations:
+            return
+
+        for card in range(self.nb_cards):
+            values = set(prefix[card] for prefix in self.valid_permutations)
+            if len(values) == 1:
+                return card, values.pop()
+
+    def compute_cycles(self, permutation, permutation_):
+        found_cards = set()
+        cycles = []
+        for card in range(self.nb_cards):
+            if card in found_cards:
+                continue
+            cycle = []
+            while not (cycle and card == cycle[0]):
+                cycle.append(card)
+                card = permutation_.index(permutation[card])
+            cycles.append(cycle)
+            found_cards |= set(cycle)
+        return cycles
+
+    def find_card(self):
+        self.valid_permutations = set(permutations(range(self.nb_cards)))
+
+        for permutation, permutation_ in combinations(self.valid_permutations, 2):
+            if any(value == value_ for value, value_ in zip(permutation, permutation_)):
+                continue
+
+            cycles = self.compute_cycles(permutation, permutation_)
+
+            cards = []
+            for cycle in cycles:
+                cards += cycle[:-1:2]
+            cards.sort()
+            cards = tuple(cards[:self.p])
+
+            if cards not in self.clues:
+                yield cards
+
+            value = self.clues[cards]
+            if all(permutation[card] != value for card in cards):
+                self.valid_permutations.discard(permutation)
+            if all(permutation_[card] != value for card in cards):
+                self.valid_permutations.discard(permutation_)
+
+
 def cards_to_string(cards):
     return ''.join(ascii_letters[c] for c in cards)
 
@@ -196,7 +279,7 @@ def cards_from_string(string):
 def main(nb_cards, p, player):
     print(f"Playing with {nb_cards} cards and with {p} cards asked each turn.")
     engine = Engine(nb_cards)
-    player = RealPlayer(nb_cards, p) if player else SimulatedPlayer(nb_cards, p)
+    player = player(nb_cards, p)
 
     while cards := player.ask_cards():
         player.add_clue(cards, engine.get_value(cards))
@@ -211,4 +294,4 @@ def main(nb_cards, p, player):
 
 
 if __name__ == "__main__":
-    main(nb_cards=6, p=3, player=True)
+    main(nb_cards=5, p=2, player=TheoreticalPlayer)
