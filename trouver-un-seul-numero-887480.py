@@ -275,6 +275,47 @@ class TheoreticalPlayer(Player):
                 self.valid_permutations.discard(permutation_)
 
 
+class NamiswanPlayer(Player):
+    """Player from demonstration of Namiswan.
+
+    See https://les-mathematiques.net/vanilla/index.php?p=/discussion/comment/2434285/#Comment_2434285
+    """
+    def __init__(self, nb_cards, p):
+        self.nb_cards = nb_cards
+        self.p = p
+        self.clues = {}
+        self.gen_ask_cards = self.ask_all_combinations()
+
+    def ask_cards(self) -> Optional[tuple[int, ...]]:
+        return next(self.gen_ask_cards, None)
+
+    def add_clue(self, cards, value):
+        print(f"{cards_to_string(cards)} -> {value}")
+        self.clues[cards] = value
+
+    def guess_a_card(self) -> tuple[int, int]:
+        intersections = {}
+        for cards, value in self.clues.items():
+            if value in intersections:
+                intersections[value] &= set(cards)
+            else:
+                intersections[value] = set(cards)
+
+        for value, cards in intersections.items():
+            if len(cards) == 1:
+                card = cards.pop()
+                print(f"Guessing {cards_to_string((card,))} -> {value}.")
+                return card, value
+
+        value = choice(list(intersections))
+        card = choice(list(intersections[value]))
+        print(f"Guessing at random {cards_to_string((card,))} -> {value}.")
+        return card, value
+
+    def ask_all_combinations(self):
+        yield from combinations(range(self.nb_cards),  self.p)
+
+
 def cards_to_string(cards):
     return ''.join(ascii_letters[c] for c in cards)
 
@@ -301,4 +342,4 @@ def main(nb_cards, p, player):
 
 
 if __name__ == "__main__":
-    main(nb_cards=5, p=2, player=TheoreticalPlayer)
+    main(nb_cards=10, p=4, player=NamiswanPlayer)
