@@ -255,6 +255,13 @@ class TheoreticalPlayer(Player):
             cards = []
             for cycle in cycles:
                 cards += cycle[:-1:2]
+            for i in range(self.nb_cards):
+                if len(cards) >= self.p:
+                    break
+                if i in cards:
+                    continue
+                cards.append(i)
+
             cards.sort()
             cards = tuple(cards[:self.p])
 
