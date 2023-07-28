@@ -6,13 +6,13 @@ from matplotlib import pyplot
 def find_roots(a):
     """Find solutions to x**2 + a = 0 (2**k)."""
     if a % 2 == 0:
-        t = int(log2(a & ~(a - 1)))
+        t = (a & -a).bit_length() - 1
         if t == 1:
             yield 1, 2, {0}
         else:
             t -= t%2
             for k, m, xs in find_roots(a >> t):
-                yield k + t, m << t, {x << (t-1) for x in xs}
+                yield k + t, m << t, {x << (t//2) for x in xs}
 
         return
 
