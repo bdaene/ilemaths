@@ -146,7 +146,7 @@ def main(population_size=200, pawn_probability=0.5, survivors=10):
     population = RNG.random((population_size, 8, 8)) < pawn_probability
 
     best_score = (0, 0)
-    with multiprocessing.Pool(1) as worker_pool:
+    with multiprocessing.Pool() as worker_pool:
         for generation in count():
             population = numpy.unique(population, axis=0)
             fitness = get_fitness(population, generation, worker_pool)
